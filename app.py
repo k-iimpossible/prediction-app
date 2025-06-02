@@ -1014,20 +1014,20 @@ class HospitalSimulation:
         st.write("Simulating")
         progress_bar = st.progress(0)  # Add this before the loop
 
-	for minute in range(time_steps):
-	    # Process new arrivals
-	    while arrivals and arrivals[0].arrival_time <= minute:
-	        p = arrivals.pop(0)
-	        choice = 'current_queue' if np.random.rand() < 0.5 else 'smart_queue'
-	        self.assign_kiosk_queue(p, choice, minute)
-	    
-	    # Process all queues
-	    self.process_queues(minute)
-	
-	    # Update the Streamlit progress bar
-	    progress_bar.progress((minute + 1) / time_steps)
-	
-	progress_bar.empty()  # Clear the progress bar after completion
+        for minute in range(time_steps):
+            # Process new arrivals
+            while arrivals and arrivals[0].arrival_time <= minute:
+                p = arrivals.pop(0)
+                choice = 'current_queue' if np.random.rand() < 0.5 else 'smart_queue'
+                self.assign_kiosk_queue(p, choice, minute)
+            
+            # Process all queues
+            self.process_queues(minute)
+
+            # Update the Streamlit progress bar
+            progress_bar.progress((minute + 1) / time_steps)
+
+        progress_bar.empty()  # Clear the progress bar after completion
         
         return self.compile_results()
     
