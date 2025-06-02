@@ -8,14 +8,15 @@ from sklearn.metrics import classification_report, accuracy_score
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 
-st.title("Buy Prediction Model")
+st.title("Prediction Model")
 
-train_file = st.file_uploader("Upload Train CSV", type="csv")
-test_file = st.file_uploader("Upload Test CSV", type="csv")
+train_file = 'train.csv'
+test_file = 'test.csv'
 
-if train_file and test_file:
-    train_df = pd.read_csv(train_file)
-    test_df = pd.read_csv(test_file)
+train_df = pd.read_csv(train_file)
+test_df = pd.read_csv(test_file)
+
+if train_df and test_df:
 
     X_train = train_df[['age', 'income']]
     y_train = train_df['buy']
