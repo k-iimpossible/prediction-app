@@ -1011,7 +1011,7 @@ class HospitalSimulation:
                          key=lambda p: p.arrival_time)
         time_steps = int(self.sim_hours * 60)
 
-	st.write("Simulating")
+        st.write("Simulating")
         progress_bar = st.progress(0)  # Add this before the loop
 
 	for minute in range(time_steps):
