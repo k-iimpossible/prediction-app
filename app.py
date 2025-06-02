@@ -1177,58 +1177,57 @@ def run_replications(abandonment_model, rate=10, servers=2, hours=10, n_reps=100
 
 
 def plot_abandonment_curve(model, max_wait=180):
-   """
-   Visualize the learned abandonment probability curve.
-   Shows how abandonment likelihood increases with wait time.
-   """
-   # Generate range of wait times to plot
-   wait_times = np.linspace(0, max_wait, NUM_POINTS)
-   
-   # Calculate base probabilities and stage-specific probabilities
-   base_probs = [model.predict_probability(w) for w in wait_times]
-   kiosk_probs = [p * KIOSK_MULTIPLIER for p in base_probs]
-   reg_probs = [p * REGISTRATION_MULTIPLIER for p in base_probs]
-   triage_probs = [p * TRIAGE_MULTIPLIER for p in base_probs]
-   
-   # Create the plot
-   plt.figure(figsize=(FIGURE_WIDTH, FIGURE_HEIGHT))
-   plt.plot(wait_times, base_probs, 'k-', linewidth=LINE_WIDTH, alpha=BASE_ALPHA, label='Base probability')
-   plt.plot(wait_times, kiosk_probs, 'b-', linewidth=LINE_WIDTH, label=f'Kiosk (×{KIOSK_MULTIPLIER})')
-   plt.plot(wait_times, reg_probs, 'orange', linewidth=LINE_WIDTH, label=f'Registration (×{REGISTRATION_MULTIPLIER})')
-   plt.plot(wait_times, triage_probs, 'r-', linewidth=LINE_WIDTH, label=f'Triage (×{TRIAGE_MULTIPLIER})')
-   
-   plt.axhline(y=ABANDONMENT_THRESHOLD, color='gray', linestyle='--', alpha=BASE_ALPHA, label='50% threshold')
-   plt.axvline(x=TWO_HOUR_MARK, color='g', linestyle='--', alpha=BASE_ALPHA, label='2-hour mark')
-   
-   plt.xlabel('Projected Wait Time (minutes)')
-   plt.ylabel('Probability of Abandonment')
-   plt.title('Learned Patient Abandonment Model by Stage')
-   plt.grid(True, alpha=0.3)
-   plt.legend()
-   plt.xlim(0, max_wait)
-   plt.ylim(0, 1)
-   
-   # Stage configurations for finding 50% abandonment points
-   stage_configs = [
-       ('Kiosk', kiosk_probs, 'b'), 
-       ('Registration', reg_probs, 'orange'), 
-       ('Triage', triage_probs, 'r')
-   ]
-   
-   # Find where each stage reaches 50% abandonment
-   for i, (stage_name, probs, color) in enumerate(stage_configs):
-       for w, p in zip(wait_times, probs):
-           if p >= ABANDONMENT_THRESHOLD:
-               plt.plot(w, ABANDONMENT_THRESHOLD, 'o', color=color, markersize=MARKER_SIZE)
-               
-               # Stagger the labels vertically
-               plt.text(w + LABEL_X_OFFSET, LABEL_Y_POSITIONS[i], f'{stage_name}: {w:.0f} min', 
-                       ha='right', va='center', fontsize=FONT_SIZE, color=color)
-               break
-   
-   plt.tight_layout()
-   st.pyplot(plt)
-
+    """
+    Visualize the learned abandonment probability curve.
+    Shows how abandonment likelihood increases with wait time.
+    """
+    # Generate range of wait times to plot
+    wait_times = np.linspace(0, max_wait, NUM_POINTS)
+    
+    # Calculate probabilities
+    base_probs = [model.predict_probability(w) for w in wait_times]
+    kiosk_probs = [p * KIOSK_MULTIPLIER for p in base_probs]
+    reg_probs = [p * REGISTRATION_MULTIPLIER for p in base_probs]
+    triage_probs = [p * TRIAGE_MULTIPLIER for p in base_probs]
+    
+    # Always use a local figure and axis
+    fig, ax = plt.subplots(figsize=(FIGURE_WIDTH, FIGURE_HEIGHT))
+    ax.plot(wait_times, base_probs, 'k-', linewidth=LINE_WIDTH, alpha=BASE_ALPHA, label='Base probability')
+    ax.plot(wait_times, kiosk_probs, 'b-', linewidth=LINE_WIDTH, label=f'Kiosk (×{KIOSK_MULTIPLIER})')
+    ax.plot(wait_times, reg_probs, color='orange', linewidth=LINE_WIDTH, label=f'Registration (×{REGISTRATION_MULTIPLIER})')
+    ax.plot(wait_times, triage_probs, 'r-', linewidth=LINE_WIDTH, label=f'Triage (×{TRIAGE_MULTIPLIER})')
+    
+    ax.axhline(y=ABANDONMENT_THRESHOLD, color='gray', linestyle='--', alpha=BASE_ALPHA, label='50% threshold')
+    ax.axvline(x=TWO_HOUR_MARK, color='g', linestyle='--', alpha=BASE_ALPHA, label='2-hour mark')
+    
+    ax.set_xlabel('Projected Wait Time (minutes)')
+    ax.set_ylabel('Probability of Abandonment')
+    ax.set_title('Learned Patient Abandonment Model by Stage')
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    ax.set_xlim(0, max_wait)
+    ax.set_ylim(0, 1)
+    
+    # Stage configurations for finding 50% abandonment points
+    stage_configs = [
+        ('Kiosk', kiosk_probs, 'b'), 
+        ('Registration', reg_probs, 'orange'), 
+        ('Triage', triage_probs, 'r')
+    ]
+    
+    # Find where each stage reaches 50% abandonment
+    for i, (stage_name, probs, color) in enumerate(stage_configs):
+        for w, p in zip(wait_times, probs):
+            if p >= ABANDONMENT_THRESHOLD:
+                ax.plot(w, ABANDONMENT_THRESHOLD, 'o', color=color, markersize=MARKER_SIZE)
+                
+                # Stagger the labels vertically
+                ax.text(w + LABEL_X_OFFSET, LABEL_Y_POSITIONS[i], f'{stage_name}: {w:.0f} min', 
+                        ha='right', va='center', fontsize=FONT_SIZE, color=color)
+                break
+    
+    fig.tight_layout()
+    st.pyplot(fig)
 
 def visualize_single_run_results(results):
     """
@@ -1448,8 +1447,8 @@ def visualize_single_run_results(results):
     ax.legend()
     ax.grid(True, alpha=0.3, axis='y')
     
-    plt.tight_layout()
-    st.pyplot(plt)
+    fig.tight_layout()
+	st.pyplot(fig)
 
 def plot_replication_results(rep_df):
     """Plot results across multiple replications for 3-stage system"""
@@ -1490,8 +1489,8 @@ def plot_replication_results(rep_df):
     ax.legend()
     ax.grid(True, alpha=0.3)
     
-    plt.tight_layout()
-    st.pyplot(plt)
+    fig.tight_layout()
+    st.pyplot(fig)
 
 # ============================================
 # PART 9: Main Execution
