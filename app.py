@@ -1181,6 +1181,7 @@ def plot_abandonment_curve(model, max_wait=180):
     Visualize the learned abandonment probability curve.
     Shows how abandonment likelihood increases with wait time.
     """
+    st.write("\nfunctional start")
     # Generate range of wait times to plot
     wait_times = np.linspace(0, max_wait, NUM_POINTS)
     
@@ -1191,6 +1192,7 @@ def plot_abandonment_curve(model, max_wait=180):
     triage_probs = [p * TRIAGE_MULTIPLIER for p in base_probs]
     
     # Always use a local figure and axis
+    st.write("\n before assign")
     fig, ax = plt.subplots(figsize=(FIGURE_WIDTH, FIGURE_HEIGHT))
     ax.plot(wait_times, base_probs, 'k-', linewidth=LINE_WIDTH, alpha=BASE_ALPHA, label='Base probability')
     ax.plot(wait_times, kiosk_probs, 'b-', linewidth=LINE_WIDTH, label=f'Kiosk (×{KIOSK_MULTIPLIER})')
@@ -1216,7 +1218,7 @@ def plot_abandonment_curve(model, max_wait=180):
     ]
     
     # Find where each stage reaches 50% abandonment
-    st.write("before for")
+    st.write("\nbefore for")
     for i, (stage_name, probs, color) in enumerate(stage_configs):
         for w, p in zip(wait_times, probs):
             if p >= ABANDONMENT_THRESHOLD:
@@ -1226,9 +1228,9 @@ def plot_abandonment_curve(model, max_wait=180):
                 ax.text(w + LABEL_X_OFFSET, LABEL_Y_POSITIONS[i], f'{stage_name}: {w:.0f} min', 
                         ha='right', va='center', fontsize=FONT_SIZE, color=color)
                 break
-    st.write("before")
+    st.write("\nbefore")
     # st.pyplot(fig)
-    st.write("after")
+    st.write("\nafter")
 
 def visualize_single_run_results(results):
     """
@@ -1571,6 +1573,7 @@ def main():
         
         st.write("\nVisualizing abandonment probability curve...")
         plot_abandonment_curve(ab_model)
+        st.write("\nafter all")
         
     except Exception as e:
         st.warning(f"⚠ Could not train abandonment model: {e}")
