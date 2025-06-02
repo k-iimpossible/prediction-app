@@ -108,7 +108,6 @@ import streamlit as st
 import pandas as pd                    # For reading CSV files and data manipulation
 import numpy as np                     # For numerical operations and array handling
 from numpy import exp                  # For exponential function in sigmoid calculation
-from tqdm import tqdm                  # For progress bars during simulation
 import matplotlib.pyplot as plt        # For creating visualizations
 from collections import deque          # For efficient queue operations (FIFO)
 from scipy import stats                # For statistical distributions and tests
@@ -1011,16 +1010,24 @@ class HospitalSimulation:
         arrivals = sorted(generate_arrivals(self.arrival_rate, self.sim_hours), 
                          key=lambda p: p.arrival_time)
         time_steps = int(self.sim_hours * 60)
-        
-        for minute in tqdm(range(time_steps), desc="Simulating"):
-            # Process new arrivals
-            while arrivals and arrivals[0].arrival_time <= minute:
-                p = arrivals.pop(0)
-                choice = 'current_queue' if np.random.rand() < 0.5 else 'smart_queue'
-                self.assign_kiosk_queue(p, choice, minute)
-            
-            # Process all queues
-            self.process_queues(minute)
+
+	st.write("Simulating")
+        progress_bar = st.progress(0)  # Add this before the loop
+
+	for minute in range(time_steps):
+	    # Process new arrivals
+	    while arrivals and arrivals[0].arrival_time <= minute:
+	        p = arrivals.pop(0)
+	        choice = 'current_queue' if np.random.rand() < 0.5 else 'smart_queue'
+	        self.assign_kiosk_queue(p, choice, minute)
+	    
+	    # Process all queues
+	    self.process_queues(minute)
+	
+	    # Update the Streamlit progress bar
+	    progress_bar.progress((minute + 1) / time_steps)
+	
+	progress_bar.empty()  # Clear the progress bar after completion
         
         return self.compile_results()
     
@@ -1133,7 +1140,10 @@ def run_replications(abandonment_model, rate=10, servers=2, hours=10, n_reps=100
     """Run multiple replications and collect statistics"""
     all_results = []
     
-    for rep in tqdm(range(n_reps), desc="Running replications"):
+    st.write("Running replications")
+    progress_bar = st.progress(0)
+
+    for rep in range(n_reps):
         sim = HospitalSimulation(rate, servers, hours, abandonment_model)
         results = sim.run()
         
@@ -1142,19 +1152,22 @@ def run_replications(abandonment_model, rate=10, servers=2, hours=10, n_reps=100
         served_smart = results['queue_triage_smart'].served_patients
         
         rep_metrics = {
-            'rep': rep,
-            'avg_wait_current': np.mean([p.total_wait_time for p in served_current]) if served_current else 0,
-            'avg_wait_smart': np.mean([p.total_wait_time for p in served_smart]) if served_smart else 0,
-            'avg_wait_triage_current': np.mean([p.triage_wait_time for p in served_current]) if served_current else 0,
-            'avg_wait_triage_smart': np.mean([p.triage_wait_time for p in served_smart]) if served_smart else 0,
-            'abandon_rate_current': len([p for p in results['patients_current'] if p.abandoned]) / len(results['patients_current']) if results['patients_current'] else 0,
-            'abandon_rate_smart': len([p for p in results['patients_smart'] if p.abandoned]) / len(results['patients_smart']) if results['patients_smart'] else 0,
-            'throughput_current': len(served_current),
-            'throughput_smart': len(served_smart),
-            'ci_coverage': np.mean([p.ci_contains_actual for p in served_smart if p.ci_contains_actual is not None]) if served_smart else 0
+	      'rep': rep,
+	      'avg_wait_current': np.mean([p.total_wait_time for p in served_current]) if served_current else 0,
+	      'avg_wait_smart': np.mean([p.total_wait_time for p in served_smart]) if served_smart else 0,
+	      'avg_wait_triage_current': np.mean([p.triage_wait_time for p in served_current]) if served_current else 0,
+	      'avg_wait_triage_smart': np.mean([p.triage_wait_time for p in served_smart]) if served_smart else 0,
+	      'abandon_rate_current': len([p for p in results['patients_current'] if p.abandoned]) / len(results['patients_current']) if results['patients_current'] else 0,
+	      'abandon_rate_smart': len([p for p in results['patients_smart'] if p.abandoned]) / len(results['patients_smart']) if results['patients_smart'] else 0,
+	      'throughput_current': len(served_current),
+	      'throughput_smart': len(served_smart),
+	      'ci_coverage': np.mean([p.ci_contains_actual for p in served_smart if p.ci_contains_actual is not None]) if served_smart else 0
         }
         
         all_results.append(rep_metrics)
+        progress_bar.progress((rep + 1) / n_reps)
+
+    progress_bar.empty()
     
     return pd.DataFrame(all_results)
 
