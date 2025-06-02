@@ -1216,6 +1216,7 @@ def plot_abandonment_curve(model, max_wait=180):
     ]
     
     # Find where each stage reaches 50% abandonment
+    st.write("before for")
     for i, (stage_name, probs, color) in enumerate(stage_configs):
         for w, p in zip(wait_times, probs):
             if p >= ABANDONMENT_THRESHOLD:
@@ -1225,9 +1226,9 @@ def plot_abandonment_curve(model, max_wait=180):
                 ax.text(w + LABEL_X_OFFSET, LABEL_Y_POSITIONS[i], f'{stage_name}: {w:.0f} min', 
                         ha='right', va='center', fontsize=FONT_SIZE, color=color)
                 break
-	st.write("before")
+    st.write("before")
     st.pyplot(fig)
-	st.write("after")
+    st.write("after")
 
 def visualize_single_run_results(results):
     """
