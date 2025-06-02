@@ -1225,7 +1225,8 @@ def plot_abandonment_curve(model, max_wait=180):
                 ax.text(w + LABEL_X_OFFSET, LABEL_Y_POSITIONS[i], f'{stage_name}: {w:.0f} min', 
                         ha='right', va='center', fontsize=FONT_SIZE, color=color)
                 break
-    
+
+	st.set_option('deprecation.showPyplotGlobalUse', False)
     st.pyplot(fig)
 
 def visualize_single_run_results(results):
