@@ -16,7 +16,7 @@ test_file = 'test.csv'
 train_df = pd.read_csv(train_file)
 test_df = pd.read_csv(test_file)
 
-if train_df and test_df:
+if train_df is not None and test_df is not None:
 
     X_train = train_df[['age', 'income']]
     y_train = train_df['buy']
