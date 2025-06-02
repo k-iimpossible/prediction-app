@@ -1226,7 +1226,6 @@ def plot_abandonment_curve(model, max_wait=180):
                         ha='right', va='center', fontsize=FONT_SIZE, color=color)
                 break
     
-    fig.tight_layout()
     st.pyplot(fig)
 
 def visualize_single_run_results(results):
