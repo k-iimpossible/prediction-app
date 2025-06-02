@@ -1501,8 +1501,6 @@ def main():
     st.header("ENHANCED 3-STAGE HOSPITAL MULTI-STAGE SIMULATION")
     st.subheader("Stanford CS109 Probability Challenge")
     st.markdown("="*60)
-
-    st.set_option('deprecation.showPyplotGlobalUse', False)
     
     # Load and train abandonment model
     st.write("\n[Step 1] Training Abandonment Model")
