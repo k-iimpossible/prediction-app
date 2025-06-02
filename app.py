@@ -1225,9 +1225,9 @@ def plot_abandonment_curve(model, max_wait=180):
                 ax.text(w + LABEL_X_OFFSET, LABEL_Y_POSITIONS[i], f'{stage_name}: {w:.0f} min', 
                         ha='right', va='center', fontsize=FONT_SIZE, color=color)
                 break
-
-    st.set_option('deprecation.showPyplotGlobalUse', False)
+	st.write("before")
     st.pyplot(fig)
+	st.write("after")
 
 def visualize_single_run_results(results):
     """
@@ -1448,7 +1448,7 @@ def visualize_single_run_results(results):
     ax.grid(True, alpha=0.3, axis='y')
     
     fig.tight_layout()
-	st.pyplot(fig)
+    st.pyplot(fig)
 
 def plot_replication_results(rep_df):
     """Plot results across multiple replications for 3-stage system"""
@@ -1502,6 +1502,8 @@ def main():
     st.header("ENHANCED 3-STAGE HOSPITAL MULTI-STAGE SIMULATION")
     st.subheader("Stanford CS109 Probability Challenge")
     st.markdown("="*60)
+
+    st.set_option('deprecation.showPyplotGlobalUse', False)
     
     # Load and train abandonment model
     st.write("\n[Step 1] Training Abandonment Model")
