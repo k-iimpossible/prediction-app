@@ -1496,7 +1496,6 @@ def plot_replication_results(rep_df):
 # ============================================
 # PART 9: Main Execution
 # ============================================
-import streamlit as st
 
 def main():
     """Main execution function with all analyses for 3-stage system (Streamlit version)"""
@@ -1569,8 +1568,7 @@ def main():
         ab_model = HospitalAbandonmentModel(w, feature_names, wait_time_mean, wait_time_std)
         
         st.write("\nVisualizing abandonment probability curve...")
-        fig = plot_abandonment_curve(ab_model)   # Assume this returns a matplotlib figure
-        st.pyplot(fig)
+        plot_abandonment_curve(ab_model)
         
     except Exception as e:
         st.warning(f"⚠ Could not train abandonment model: {e}")
@@ -1687,8 +1685,7 @@ def main():
     st.markdown("="*60)
     
     st.write("\nCreating 3-stage visualizations...")
-    fig2 = visualize_single_run_results(results)   # Again, returns a matplotlib fig
-    st.pyplot(fig2)
+    visualize_single_run_results(results)
     
     # Continue with remaining analysis steps...
     st.write("\n[Step 4] Maximum Likelihood Estimation")
@@ -1877,8 +1874,7 @@ def main():
     
     # Multiple replication visualization
     st.write("\nCreating replication analysis visualization...")
-    fig3 = plot_replication_results(rep_df)
-    st.pyplot(fig3)
+    plot_replication_results(rep_df)
     
     st.markdown("\n" + "="*60)
     st.header("3-STAGE SIMULATION COMPLETE")
