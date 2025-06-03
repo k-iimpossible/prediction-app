@@ -1905,12 +1905,12 @@ if __name__ == '__main__':
     output_buffer = StringIO()
     
     with contextlib.redirect_stdout(output_buffer):
-      results, replications, bootstrap_metrics = main()
+        results, replications, bootstrap_metrics = main()
 
     # Display the captured output
     captured_output = output_buffer.getvalue()
     if captured_output:
-      st.text_area("Output:", captured_output, height=300)
+        st.text_area("Output:", captured_output, height=300)
     
     # Clean exit button (visual only)
     st.success("✅ Visualization complete! You can now:")
