@@ -1,5 +1,5 @@
 """
-wait.py
+wait_final_streamlit_split_screen.py
 
 Stanford CS109 Probability Challenge Project:
 Smart Queues, Faster Care — Dorado Hospital Multi-Stage Simulation
@@ -55,7 +55,7 @@ Technical Implementation:
 - Uses numpy for random number generation and numerical operations
 - Pandas for data manipulation and analysis
 - Matplotlib for comprehensive visualizations
-- Scipy for statistical distributions (chi-square, t-distribution)
+- Scipy for statistical distributions (chi-square)
 - tqdm for progress tracking during simulations
 
 -----------------------------------------------------------
@@ -116,10 +116,7 @@ from typing import List, Tuple, Dict, Optional, Union  # For type annotations
 # For using streamlit
 import streamlit as st                #  For Web app framework for creating interactive dashboards
 import time                           # For adding delays and time-based operations
-import sys
-
-from io import StringIO
-import contextlib
+import sys                            # System-specific parameters and functions (e.g., exit, command line args, Python path) 
 
 
 warnings.filterwarnings('ignore')
@@ -1900,18 +1897,43 @@ def main():
     
     return results, rep_df, complex_metrics
 
-if __name__ == '__main__':
-    # Capture print statements
-    output_buffer = StringIO()
-    
-    with contextlib.redirect_stdout(output_buffer):
-        results, replications, bootstrap_metrics = main()
 
-    # Display the captured output
-    captured_output = output_buffer.getvalue()
-    if captured_output:
-        st.text_area("Output:", captured_output, height=300)
+if __name__ == '__main__':
+    # Set page layout
+    st.set_page_config(layout="wide")
     
-    # Clean exit button (visual only)
-    st.success("✅ Visualization complete! You can now:")
-    st.info("You May Close This Window + Press Ctrl+C In The Terminal To Stop The Server")
+    # Create two columns
+    col1, col2 = st.columns([2, 1])
+    
+    # Create a placeholder for output in col2
+    with col2:
+        st.header("Simulation Output")
+        output_area = st.empty()
+        output_text = []
+    
+    # Save original print function FIRST
+    import builtins
+    original_print = builtins.print
+    
+    # Custom print function that updates the output area
+    def custom_print(*args, **kwargs):
+        # Convert args to string
+        text = ' '.join(str(arg) for arg in args)
+        original_print(text)  # Use original print to terminal
+        output_text.append(text)
+        output_area.text_area("Terminal Output", value="\n".join(output_text), height=800, disabled=True)
+    
+    # Replace print with custom version
+    builtins.print = custom_print
+    
+    # Run simulation with graphs in col1
+    with col1:
+        st.header("3-Stage Hospital Queue Simulation")
+        results, replications, bootstrap_metrics = main()
+        
+        # Keep your exit messages here, inside col1
+        st.success("✅ Visualization complete! You can now:")
+        st.info("You May Close This Window + Press Ctrl+C In The Terminal To Stop The Server")
+    
+    # Restore original print
+    builtins.print = original_print
