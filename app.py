@@ -116,7 +116,10 @@ from typing import List, Tuple, Dict, Optional, Union  # For type annotations
 # For using streamlit
 import streamlit as st                #  For Web app framework for creating interactive dashboards
 import time                           # For adding delays and time-based operations
-import sys 
+import sys
+
+from io import StringIO
+import contextlib
 
 
 warnings.filterwarnings('ignore')
@@ -1498,21 +1501,21 @@ def plot_replication_results(rep_df):
 # ============================================
 def main():
     """Main execution function with all analyses for 3-stage system"""
-    st.write("="*60)
-    st.write("ENHANCED 3-STAGE HOSPITAL MULTI-STAGE SIMULATION")
-    st.write("Stanford CS109 Probability Challenge")
-    st.write("="*60)
+    print("="*60)
+    print("ENHANCED 3-STAGE HOSPITAL MULTI-STAGE SIMULATION")
+    print("Stanford CS109 Probability Challenge")
+    print("="*60)
     
     # Load and train abandonment model
-    st.write("\n[Step 1] Training Abandonment Model")
-    st.write("-" * 40)
+    print("\n[Step 1] Training Abandonment Model")
+    print("-" * 40)
     try:
 
         # ─── Load the CSVs ──────────────────────────────────────
-        st.write("Loading training data...")
+        print("Loading training data...")
         df_train = pd.read_csv('train.csv')
         df_test  = pd.read_csv('test.csv')
-        st.write(f"Loaded {len(df_train)} training examples and {len(df_test)} test examples")
+        print(f"Loaded {len(df_train)} training examples and {len(df_test)} test examples")
 
         # 1) Split features & labels
         X_train, y_train = split_features_and_labels(df_train)
@@ -1531,7 +1534,7 @@ def main():
         wait_time_idx = X_train.columns.tolist().index('wait_time')
         wait_time_mean = FEATURE_MEANS[wait_time_idx]
         wait_time_std = FEATURE_STDS[wait_time_idx]
-        st.write(f"  wait_time mean: {wait_time_mean:.2f}, std: {wait_time_std:.2f}")
+        print(f"  wait_time mean: {wait_time_mean:.2f}, std: {wait_time_std:.2f}")
 
         # 3) Prepend intercept column
         num_train      = X_tr_scaled.shape[0]
@@ -1552,29 +1555,29 @@ def main():
         )
                 
         # Evaluate model
-        st.write("\nEvaluating model performance...")
+        print("\nEvaluating model performance...")
         train_acc = evaluate_accuracy(X_train_final, y_train, w)
         test_acc  = evaluate_accuracy(X_test_final,  y_test,  w)
-        st.write(f"Training Accuracy: {train_acc:.4f} ({train_acc*100:.1f}%)")
-        st.write(f"Test Accuracy: {test_acc:.4f} ({test_acc*100:.1f}%)")
+        print(f"Training Accuracy: {train_acc:.4f} ({train_acc*100:.1f}%)")
+        print(f"Test Accuracy: {test_acc:.4f} ({test_acc*100:.1f}%)")
         
         # Print learned parameters
-        st.write("\nLearned Model Parameters:")
+        print("\nLearned Model Parameters:")
         feature_names = ['intercept'] + X_train.columns.tolist()
         for fname, weight in zip(feature_names, w):
-            st.write(f"  {fname}: {weight:.6f}")
+            print(f"  {fname}: {weight:.6f}")
         
         ab_model = HospitalAbandonmentModel(w, feature_names, wait_time_mean, wait_time_std)
         
-        st.write("\nVisualizing abandonment probability curve...")
+        print("\nVisualizing abandonment probability curve...")
         
         fig = plot_abandonment_curve(ab_model)  # for streamlit
         st.pyplot(fig)
 
         
     except Exception as e:
-        st.write(f"⚠ Could not train abandonment model: {e}")
-        st.write("  Using default abandonment model")
+        print(f"⚠ Could not train abandonment model: {e}")
+        print("  Using default abandonment model")
         class DefaultAbandonmentModel:
             def simulate_abandonment(self, wait_time, stage=1):
                 if stage == 1:
@@ -1587,23 +1590,23 @@ def main():
         ab_model = DefaultAbandonmentModel()
     
     # Run single detailed simulation
-    st.write("\n[Step 2] Running 3-Stage Hospital Queue Simulation")
-    st.write("-" * 40)
+    print("\n[Step 2] Running 3-Stage Hospital Queue Simulation")
+    print("-" * 40)
     ARRIVAL_RATE = 10
     NUM_SERVERS = 2             # Represents servers PER DEDICATED PATH/SUB-QUEUE at each service stage (Registration, Triage)
     SIMULATION_HOURS = 10
     
-    st.write("Parameters:")
-    st.write(f"  Arrival rate: {ARRIVAL_RATE} patients/hour")
-    st.write(f"  Number of servers: {NUM_SERVERS}")
-    st.write(f"  Simulation duration: {SIMULATION_HOURS} hours")
-    st.write("  System: 3-stage (Kiosk → Registration → Triage)")
+    print("Parameters:")
+    print(f"  Arrival rate: {ARRIVAL_RATE} patients/hour")
+    print(f"  Number of servers: {NUM_SERVERS}")
+    print(f"  Simulation duration: {SIMULATION_HOURS} hours")
+    print("  System: 3-stage (Kiosk → Registration → Triage)")
     
-    st.write(f"\nStarting simulation for {SIMULATION_HOURS} hours...")
+    print(f"\nStarting simulation for {SIMULATION_HOURS} hours...")
     sim = HospitalSimulation(ARRIVAL_RATE, NUM_SERVERS, SIMULATION_HOURS, ab_model)
     results = sim.run()
     
-    st.write("\nSimulation complete!")
+    print("\nSimulation complete!")
     
     # Extract data for analysis
     all_patients = results['all_patients']
@@ -1611,12 +1614,12 @@ def main():
     served_smart = results['queue_triage_smart'].served_patients
     
     # Print summary statistics
-    st.write("\n[Step 3] Analyzing 3-Stage Results")
-    st.write("-" * 40)
+    print("\n[Step 3] Analyzing 3-Stage Results")
+    print("-" * 40)
     
-    st.write("\n" + "="*60)
-    st.write("3-STAGE SIMULATION SUMMARY STATISTICS")
-    st.write("="*60)
+    print("\n" + "="*60)
+    print("3-STAGE SIMULATION SUMMARY STATISTICS")
+    print("="*60)
     
     # Current queue statistics
     total_current = len(results['patients_current'])
@@ -1624,25 +1627,25 @@ def main():
     abandoned_current = total_current - served_current_count
     waits_current = [p.total_wait_time for p in served_current if p.total_wait_time is not None]
     
-    st.write("\nCurrent Queue (Traditional):")
-    st.write(f"  Total arrivals: {total_current}")
-    st.write(f"  Total served: {served_current_count}")
-    st.write(f"  Total abandoned: {abandoned_current}")
+    print("\nCurrent Queue (Traditional):")
+    print(f"  Total arrivals: {total_current}")
+    print(f"  Total served: {served_current_count}")
+    print(f"  Total abandoned: {abandoned_current}")
     if waits_current:
-        st.write(f"  Average total wait time: {np.mean(waits_current):.1f} minutes")
-        st.write(f"  Maximum total wait time: {np.max(waits_current):.1f} minutes")
+        print(f"  Average total wait time: {np.mean(waits_current):.1f} minutes")
+        print(f"  Maximum total wait time: {np.max(waits_current):.1f} minutes")
         # Stage breakdown
         kiosk_waits_current = [p.kiosk_wait_time for p in served_current if p.kiosk_wait_time is not None]
         reg_waits_current = [p.registration_wait_time for p in served_current if p.registration_wait_time is not None]
         triage_waits_current = [p.triage_wait_time for p in served_current if p.triage_wait_time is not None]
-        st.write(f"    - Average kiosk wait: {np.mean(kiosk_waits_current):.1f} min")
-        st.write(f"    - Average registration wait: {np.mean(reg_waits_current):.1f} min")
-        st.write(f"    - Average triage wait: {np.mean(triage_waits_current):.1f} min")
+        print(f"    - Average kiosk wait: {np.mean(kiosk_waits_current):.1f} min")
+        print(f"    - Average registration wait: {np.mean(reg_waits_current):.1f} min")
+        print(f"    - Average triage wait: {np.mean(triage_waits_current):.1f} min")
     else:
-        st.write(f"  Average total wait time: 0.0 minutes")
-        st.write(f"  Maximum total wait time: 0.0 minutes")
+        print(f"  Average total wait time: 0.0 minutes")
+        print(f"  Maximum total wait time: 0.0 minutes")
     abandon_rate_current = abandoned_current / total_current * 100 if total_current > 0 else 0
-    st.write(f"  Abandonment rate: {abandon_rate_current:.1f}%")
+    print(f"  Abandonment rate: {abandon_rate_current:.1f}%")
     
     # Smart queue statistics
     total_smart = len(results['patients_smart'])
@@ -1650,52 +1653,52 @@ def main():
     abandoned_smart = total_smart - served_smart_count
     waits_smart = [p.total_wait_time for p in served_smart if p.total_wait_time is not None]
     
-    st.write("\nSmart Queue (AI-Assisted):")
-    st.write(f"  Total arrivals: {total_smart}")
-    st.write(f"  Total served: {served_smart_count}")
-    st.write(f"  Total abandoned: {abandoned_smart}")
+    print("\nSmart Queue (AI-Assisted):")
+    print(f"  Total arrivals: {total_smart}")
+    print(f"  Total served: {served_smart_count}")
+    print(f"  Total abandoned: {abandoned_smart}")
     if waits_smart:
-        st.write(f"  Average total wait time: {np.mean(waits_smart):.1f} minutes")
-        st.write(f"  Maximum total wait time: {np.max(waits_smart):.1f} minutes")
+        print(f"  Average total wait time: {np.mean(waits_smart):.1f} minutes")
+        print(f"  Maximum total wait time: {np.max(waits_smart):.1f} minutes")
         # Stage breakdown
         kiosk_waits_smart = [p.kiosk_wait_time for p in served_smart if p.kiosk_wait_time is not None]
         reg_waits_smart = [p.registration_wait_time for p in served_smart if p.registration_wait_time is not None]
         triage_waits_smart = [p.triage_wait_time for p in served_smart if p.triage_wait_time is not None]
-        st.write(f"    - Average kiosk wait: {np.mean(kiosk_waits_smart):.1f} min")
-        st.write(f"    - Average registration wait: {np.mean(reg_waits_smart):.1f} min")
-        st.write(f"    - Average triage wait: {np.mean(triage_waits_smart):.1f} min")
+        print(f"    - Average kiosk wait: {np.mean(kiosk_waits_smart):.1f} min")
+        print(f"    - Average registration wait: {np.mean(reg_waits_smart):.1f} min")
+        print(f"    - Average triage wait: {np.mean(triage_waits_smart):.1f} min")
     else:
-        st.write(f"  Average total wait time: 0.0 minutes")
-        st.write(f"  Maximum total wait time: 0.0 minutes")
+        print(f"  Average total wait time: 0.0 minutes")
+        print(f"  Maximum total wait time: 0.0 minutes")
     abandon_rate_smart = abandoned_smart / total_smart * 100 if total_smart > 0 else 0
-    st.write(f"  Abandonment rate: {abandon_rate_smart:.1f}%")
+    print(f"  Abandonment rate: {abandon_rate_smart:.1f}%")
     
     # Improvement metrics
-    st.write("\nAI SYSTEM IMPROVEMENTS:")
+    print("\nAI SYSTEM IMPROVEMENTS:")
     if waits_current and waits_smart and np.mean(waits_current) > 0:
         wait_reduction = (1 - np.mean(waits_smart) / np.mean(waits_current)) * 100
-        st.write(f"  Total wait time reduction: {wait_reduction:.1f}%")
+        print(f"  Total wait time reduction: {wait_reduction:.1f}%")
     if abandon_rate_current > 0:
         abandon_reduction = (1 - abandon_rate_smart / abandon_rate_current) * 100 if abandon_rate_current > 0 else 0
-        st.write(f"  Abandonment reduction: {abandon_reduction:.1f}%")
+        print(f"  Abandonment reduction: {abandon_reduction:.1f}%")
     if served_current_count > 0:
         throughput_increase = ((served_smart_count - served_current_count) / served_current_count) * 100
-        st.write(f"  Throughput increase: {throughput_increase:.1f}%")
+        print(f"  Throughput increase: {throughput_increase:.1f}%")
     
     # Stage-specific improvements
     if reg_waits_current and reg_waits_smart:
         reg_improvement = (1 - np.mean(reg_waits_smart) / np.mean(reg_waits_current)) * 100
-        st.write(f"  Registration stage improvement: {reg_improvement:.1f}%")
-    st.write("="*60)
+        print(f"  Registration stage improvement: {reg_improvement:.1f}%")
+    print("="*60)
     
-    st.write("\nCreating 3-stage visualizations...")
+    print("\nCreating 3-stage visualizations...")
     fig = visualize_single_run_results(results) # for streamlit
     st.pyplot(fig)
 
     
     # Continue with remaining analysis steps...
-    st.write("\n[Step 4] Maximum Likelihood Estimation")
-    st.write("-" * 40)
+    print("\n[Step 4] Maximum Likelihood Estimation")
+    print("-" * 40)
     
     # Extract inter-arrival times
     if len(all_patients) > 1:
@@ -1707,13 +1710,13 @@ def main():
         
         # Estimate arrival rate
         lambda_est, lambda_ci = estimate_arrival_rate_mle(inter_arrivals)
-        st.write(f"\nArrival rate estimation:")
-        st.write(f"  MLE estimate: {lambda_est*60:.3f} patients/hour")
-        st.write(f"  95% CI: ({lambda_ci[0]*60:.3f}, {lambda_ci[1]*60:.3f}) patients/hour")
-        st.write(f"  True rate: {ARRIVAL_RATE} patients/hour")
+        print(f"\nArrival rate estimation:")
+        print(f"  MLE estimate: {lambda_est*60:.3f} patients/hour")
+        print(f"  95% CI: ({lambda_ci[0]*60:.3f}, {lambda_ci[1]*60:.3f}) patients/hour")
+        print(f"  True rate: {ARRIVAL_RATE} patients/hour")
     
     # Service rate estimation for all stages
-    st.write("\nService rate estimation:")
+    print("\nService rate estimation:")
     
     # Kiosk service times (shared)
     kiosk_times = []
@@ -1723,10 +1726,10 @@ def main():
     
     if kiosk_times:
         mu_kiosk_est, mu_kiosk_ci = estimate_service_rate_mle(kiosk_times)
-        st.write(f"\nKiosk Stage:")
-        st.write(f"  MLE estimate: {mu_kiosk_est*60:.3f} patients/hour")
-        st.write(f"  95% CI: ({mu_kiosk_ci[0]*60:.3f}, {mu_kiosk_ci[1]*60:.3f}) patients/hour")
-        st.write(f"  True rate: 30.0 patients/hour")
+        print(f"\nKiosk Stage:")
+        print(f"  MLE estimate: {mu_kiosk_est*60:.3f} patients/hour")
+        print(f"  95% CI: ({mu_kiosk_ci[0]*60:.3f}, {mu_kiosk_ci[1]*60:.3f}) patients/hour")
+        print(f"  True rate: 30.0 patients/hour")
     
     # Registration service times
     reg_current_times = [p.registration_service_duration for p in results['queue_registration_current'].served_patients if p.registration_service_duration is not None]
@@ -1734,17 +1737,17 @@ def main():
     
     if reg_current_times:
         mu_reg_current_est, mu_reg_current_ci = estimate_service_rate_mle(reg_current_times)
-        st.write(f"\nRegistration Current Queue:")
-        st.write(f"  MLE estimate: {mu_reg_current_est*60:.3f} patients/hour")
-        st.write(f"  95% CI: ({mu_reg_current_ci[0]*60:.3f}, {mu_reg_current_ci[1]*60:.3f}) patients/hour")
-        st.write(f"  True rate: 2.0 patients/hour")
+        print(f"\nRegistration Current Queue:")
+        print(f"  MLE estimate: {mu_reg_current_est*60:.3f} patients/hour")
+        print(f"  95% CI: ({mu_reg_current_ci[0]*60:.3f}, {mu_reg_current_ci[1]*60:.3f}) patients/hour")
+        print(f"  True rate: 2.0 patients/hour")
     
     if reg_smart_times:
         mu_reg_smart_est, mu_reg_smart_ci = estimate_service_rate_mle(reg_smart_times)
-        st.write(f"\nRegistration Smart Queue:")
-        st.write(f"  MLE estimate: {mu_reg_smart_est*60:.3f} patients/hour")
-        st.write(f"  95% CI: ({mu_reg_smart_ci[0]*60:.3f}, {mu_reg_smart_ci[1]*60:.3f}) patients/hour")
-        st.write(f"  True rate: 6.0 patients/hour")
+        print(f"\nRegistration Smart Queue:")
+        print(f"  MLE estimate: {mu_reg_smart_est*60:.3f} patients/hour")
+        print(f"  95% CI: ({mu_reg_smart_ci[0]*60:.3f}, {mu_reg_smart_ci[1]*60:.3f}) patients/hour")
+        print(f"  True rate: 6.0 patients/hour")
     
     # Triage service times
     triage_current_times = [p.triage_service_duration for p in served_current if p.triage_service_duration is not None]
@@ -1752,38 +1755,38 @@ def main():
     
     if triage_current_times:
         mu_triage_current_est, mu_triage_current_ci = estimate_service_rate_mle(triage_current_times)
-        st.write(f"\nTriage Current Queue:")
-        st.write(f"  MLE estimate: {mu_triage_current_est*60:.3f} patients/hour")
-        st.write(f"  95% CI: ({mu_triage_current_ci[0]*60:.3f}, {mu_triage_current_ci[1]*60:.3f}) patients/hour")
-        st.write(f"  True rate: 2.4 patients/hour")
+        print(f"\nTriage Current Queue:")
+        print(f"  MLE estimate: {mu_triage_current_est*60:.3f} patients/hour")
+        print(f"  95% CI: ({mu_triage_current_ci[0]*60:.3f}, {mu_triage_current_ci[1]*60:.3f}) patients/hour")
+        print(f"  True rate: 2.4 patients/hour")
     
     if triage_smart_times:
         mu_triage_smart_est, mu_triage_smart_ci = estimate_service_rate_mle(triage_smart_times)
-        st.write(f"\nTriage Smart Queue:")
-        st.write(f"  MLE estimate: {mu_triage_smart_est*60:.3f} patients/hour")
-        st.write(f"  95% CI: ({mu_triage_smart_ci[0]*60:.3f}, {mu_triage_smart_ci[1]*60:.3f}) patients/hour")
-        st.write(f"  True rate: 4.0 patients/hour")
+        print(f"\nTriage Smart Queue:")
+        print(f"  MLE estimate: {mu_triage_smart_est*60:.3f} patients/hour")
+        print(f"  95% CI: ({mu_triage_smart_ci[0]*60:.3f}, {mu_triage_smart_ci[1]*60:.3f}) patients/hour")
+        print(f"  True rate: 4.0 patients/hour")
     
     # AI Prediction Performance
-    st.write("\n[Step 5] AI Prediction Performance")
-    st.write("-" * 40)
+    print("\n[Step 5] AI Prediction Performance")
+    print("-" * 40)
     
     smart_with_predictions = [p for p in served_smart if p.predicted_wait is not None]
     if smart_with_predictions:
         # CI coverage
         coverage_count = sum(p.ci_contains_actual for p in smart_with_predictions if p.ci_contains_actual is not None)
         coverage_pct = coverage_count / len(smart_with_predictions) * 100
-        st.write(f"Confidence interval coverage: {coverage_pct:.1f}% (target: 95%)")
+        print(f"Confidence interval coverage: {coverage_pct:.1f}% (target: 95%)")
         
         # Prediction error
         errors = [abs(p.predicted_wait - p.triage_wait_time) for p in smart_with_predictions if p.triage_wait_time is not None]
         if errors:
-            st.write(f"Average prediction error: {np.mean(errors):.1f} minutes")
-            st.write(f"Median prediction error: {np.median(errors):.1f} minutes")
+            print(f"Average prediction error: {np.mean(errors):.1f} minutes")
+            print(f"Median prediction error: {np.median(errors):.1f} minutes")
     
     # Bootstrap analysis
-    st.write("\n[Step 6] Bootstrap Analysis")
-    st.write("-" * 40)
+    print("\n[Step 6] Bootstrap Analysis")
+    print("-" * 40)
     
     # Bootstrap wait times for each stage
     kiosk_waits_current = [p.kiosk_wait_time for p in served_current if p.kiosk_wait_time is not None]
@@ -1793,113 +1796,122 @@ def main():
     triage_waits_current = [p.triage_wait_time for p in served_current if p.triage_wait_time is not None]
     triage_waits_smart = [p.triage_wait_time for p in served_smart if p.triage_wait_time is not None]
     
-    st.write("\nBootstrap Analysis - Wait Times by Stage:")
+    print("\nBootstrap Analysis - Wait Times by Stage:")
     
     # Kiosk wait times (should be similar)
     if kiosk_waits_current and kiosk_waits_smart:
         boot_kiosk_current = bootstrap_wait_times(kiosk_waits_current, n_boot=1000)
         boot_kiosk_smart = bootstrap_wait_times(kiosk_waits_smart, n_boot=1000)
-        st.write(f"\nKiosk Wait Times:")
-        st.write(f"  Current: {boot_kiosk_current['mean']:.1f} min, 95% CI: [{boot_kiosk_current['mean_ci'][0]:.1f}, {boot_kiosk_current['mean_ci'][1]:.1f}]")
-        st.write(f"  Smart:   {boot_kiosk_smart['mean']:.1f} min, 95% CI: [{boot_kiosk_smart['mean_ci'][0]:.1f}, {boot_kiosk_smart['mean_ci'][1]:.1f}]")
+        print(f"\nKiosk Wait Times:")
+        print(f"  Current: {boot_kiosk_current['mean']:.1f} min, 95% CI: [{boot_kiosk_current['mean_ci'][0]:.1f}, {boot_kiosk_current['mean_ci'][1]:.1f}]")
+        print(f"  Smart:   {boot_kiosk_smart['mean']:.1f} min, 95% CI: [{boot_kiosk_smart['mean_ci'][0]:.1f}, {boot_kiosk_smart['mean_ci'][1]:.1f}]")
     
     # Registration wait times (key differentiator)
     if reg_waits_current and reg_waits_smart:
         boot_reg_current = bootstrap_wait_times(reg_waits_current, n_boot=1000)
         boot_reg_smart = bootstrap_wait_times(reg_waits_smart, n_boot=1000)
-        st.write(f"\nRegistration Wait Times:")
-        st.write(f"  Current: {boot_reg_current['mean']:.1f} min, 95% CI: [{boot_reg_current['mean_ci'][0]:.1f}, {boot_reg_current['mean_ci'][1]:.1f}]")
-        st.write(f"  Smart:   {boot_reg_smart['mean']:.1f} min, 95% CI: [{boot_reg_smart['mean_ci'][0]:.1f}, {boot_reg_smart['mean_ci'][1]:.1f}]")
+        print(f"\nRegistration Wait Times:")
+        print(f"  Current: {boot_reg_current['mean']:.1f} min, 95% CI: [{boot_reg_current['mean_ci'][0]:.1f}, {boot_reg_current['mean_ci'][1]:.1f}]")
+        print(f"  Smart:   {boot_reg_smart['mean']:.1f} min, 95% CI: [{boot_reg_smart['mean_ci'][0]:.1f}, {boot_reg_smart['mean_ci'][1]:.1f}]")
     
     # Triage wait times
     if triage_waits_current and triage_waits_smart:
         boot_triage_current = bootstrap_wait_times(triage_waits_current, n_boot=1000)
         boot_triage_smart = bootstrap_wait_times(triage_waits_smart, n_boot=1000)
-        st.write(f"\nTriage Wait Times:")
-        st.write(f"  Current: {boot_triage_current['mean']:.1f} min, 95% CI: [{boot_triage_current['mean_ci'][0]:.1f}, {boot_triage_current['mean_ci'][1]:.1f}]")
-        st.write(f"  Smart:   {boot_triage_smart['mean']:.1f} min, 95% CI: [{boot_triage_smart['mean_ci'][0]:.1f}, {boot_triage_smart['mean_ci'][1]:.1f}]")
+        print(f"\nTriage Wait Times:")
+        print(f"  Current: {boot_triage_current['mean']:.1f} min, 95% CI: [{boot_triage_current['mean_ci'][0]:.1f}, {boot_triage_current['mean_ci'][1]:.1f}]")
+        print(f"  Smart:   {boot_triage_smart['mean']:.1f} min, 95% CI: [{boot_triage_smart['mean_ci'][0]:.1f}, {boot_triage_smart['mean_ci'][1]:.1f}]")
     
     # Total wait times
     boot_total_current = bootstrap_wait_times(waits_current, n_boot=1000)
     boot_total_smart = bootstrap_wait_times(waits_smart, n_boot=1000)
     
-    st.write(f"\nTotal Wait Times (Bootstrap CI):")
-    st.write(f"  Current: {boot_total_current['mean']:.1f} min, 95% CI: [{boot_total_current['mean_ci'][0]:.1f}, {boot_total_current['mean_ci'][1]:.1f}]")
-    st.write(f"  Smart:   {boot_total_smart['mean']:.1f} min, 95% CI: [{boot_total_smart['mean_ci'][0]:.1f}, {boot_total_smart['mean_ci'][1]:.1f}]")
+    print(f"\nTotal Wait Times (Bootstrap CI):")
+    print(f"  Current: {boot_total_current['mean']:.1f} min, 95% CI: [{boot_total_current['mean_ci'][0]:.1f}, {boot_total_current['mean_ci'][1]:.1f}]")
+    print(f"  Smart:   {boot_total_smart['mean']:.1f} min, 95% CI: [{boot_total_smart['mean_ci'][0]:.1f}, {boot_total_smart['mean_ci'][1]:.1f}]")
     
     # Bootstrap complex metrics
     complex_metrics = bootstrap_complex_metrics(all_patients, n_boot=1000)
     
-    st.write("\nAbandonment Rates (Bootstrap CI):")
-    st.write(f"  Current: {complex_metrics['abandon_rate_current']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_rate_current']['ci'][0]*100:.1f}%, {complex_metrics['abandon_rate_current']['ci'][1]*100:.1f}%]")
-    st.write(f"  Smart:   {complex_metrics['abandon_rate_smart']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_rate_smart']['ci'][0]*100:.1f}%, {complex_metrics['abandon_rate_smart']['ci'][1]*100:.1f}%]")
+    print("\nAbandonment Rates (Bootstrap CI):")
+    print(f"  Current: {complex_metrics['abandon_rate_current']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_rate_current']['ci'][0]*100:.1f}%, {complex_metrics['abandon_rate_current']['ci'][1]*100:.1f}%]")
+    print(f"  Smart:   {complex_metrics['abandon_rate_smart']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_rate_smart']['ci'][0]*100:.1f}%, {complex_metrics['abandon_rate_smart']['ci'][1]*100:.1f}%]")
     
-    st.write("\nStage-Specific Abandonment (Current Queue):")
-    st.write(f"  Kiosk:        {complex_metrics['abandon_s1_rate_current']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s1_rate_current']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s1_rate_current']['ci'][1]*100:.1f}%]")
-    st.write(f"  Registration: {complex_metrics['abandon_s2_rate_current']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s2_rate_current']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s2_rate_current']['ci'][1]*100:.1f}%]")
-    st.write(f"  Triage:       {complex_metrics['abandon_s3_rate_current']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s3_rate_current']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s3_rate_current']['ci'][1]*100:.1f}%]")
+    print("\nStage-Specific Abandonment (Current Queue):")
+    print(f"  Kiosk:        {complex_metrics['abandon_s1_rate_current']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s1_rate_current']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s1_rate_current']['ci'][1]*100:.1f}%]")
+    print(f"  Registration: {complex_metrics['abandon_s2_rate_current']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s2_rate_current']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s2_rate_current']['ci'][1]*100:.1f}%]")
+    print(f"  Triage:       {complex_metrics['abandon_s3_rate_current']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s3_rate_current']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s3_rate_current']['ci'][1]*100:.1f}%]")
     
-    st.write("\nStage-Specific Abandonment (Smart Queue):")
-    st.write(f"  Kiosk:        {complex_metrics['abandon_s1_rate_smart']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s1_rate_smart']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s1_rate_smart']['ci'][1]*100:.1f}%]")
-    st.write(f"  Registration: {complex_metrics['abandon_s2_rate_smart']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s2_rate_smart']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s2_rate_smart']['ci'][1]*100:.1f}%]")
-    st.write(f"  Triage:       {complex_metrics['abandon_s3_rate_smart']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s3_rate_smart']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s3_rate_smart']['ci'][1]*100:.1f}%]")
+    print("\nStage-Specific Abandonment (Smart Queue):")
+    print(f"  Kiosk:        {complex_metrics['abandon_s1_rate_smart']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s1_rate_smart']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s1_rate_smart']['ci'][1]*100:.1f}%]")
+    print(f"  Registration: {complex_metrics['abandon_s2_rate_smart']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s2_rate_smart']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s2_rate_smart']['ci'][1]*100:.1f}%]")
+    print(f"  Triage:       {complex_metrics['abandon_s3_rate_smart']['mean']*100:.1f}%, CI: [{complex_metrics['abandon_s3_rate_smart']['ci'][0]*100:.1f}%, {complex_metrics['abandon_s3_rate_smart']['ci'][1]*100:.1f}%]")
     
     # Multiple replications
-    st.write("\n[Step 7] Running Multiple Replications")
-    st.write("-" * 40)
+    print("\n[Step 7] Running Multiple Replications")
+    print("-" * 40)
     rep_df = run_replications(ab_model, rate=ARRIVAL_RATE, servers=NUM_SERVERS, 
                              hours=SIMULATION_HOURS, n_reps=100)
     
-    st.write(f"\n✓ Completed {len(rep_df)} replications")
+    print(f"\n✓ Completed {len(rep_df)} replications")
     
-    st.write("\nSummary Across All Replications (3-Stage System):")
-    st.write(f"  Average Total Wait Current: {rep_df['avg_wait_current'].mean():.1f} ± {rep_df['avg_wait_current'].std():.1f} min")
-    st.write(f"  Average Total Wait Smart:   {rep_df['avg_wait_smart'].mean():.1f} ± {rep_df['avg_wait_smart'].std():.1f} min")
-    st.write(f"  Average Triage Wait Current: {rep_df['avg_wait_triage_current'].mean():.1f} ± {rep_df['avg_wait_triage_current'].std():.1f} min")
-    st.write(f"  Average Triage Wait Smart:   {rep_df['avg_wait_triage_smart'].mean():.1f} ± {rep_df['avg_wait_triage_smart'].std():.1f} min")
-    st.write(f"  Abandonment Current: {rep_df['abandon_rate_current'].mean()*100:.1f} ± {rep_df['abandon_rate_current'].std()*100:.1f}%")
-    st.write(f"  Abandonment Smart:   {rep_df['abandon_rate_smart'].mean()*100:.1f} ± {rep_df['abandon_rate_smart'].std()*100:.1f}%")
-    st.write(f"  CI Coverage Smart:   {rep_df['ci_coverage'].mean()*100:.1f} ± {rep_df['ci_coverage'].std()*100:.1f}%")
+    print("\nSummary Across All Replications (3-Stage System):")
+    print(f"  Average Total Wait Current: {rep_df['avg_wait_current'].mean():.1f} ± {rep_df['avg_wait_current'].std():.1f} min")
+    print(f"  Average Total Wait Smart:   {rep_df['avg_wait_smart'].mean():.1f} ± {rep_df['avg_wait_smart'].std():.1f} min")
+    print(f"  Average Triage Wait Current: {rep_df['avg_wait_triage_current'].mean():.1f} ± {rep_df['avg_wait_triage_current'].std():.1f} min")
+    print(f"  Average Triage Wait Smart:   {rep_df['avg_wait_triage_smart'].mean():.1f} ± {rep_df['avg_wait_triage_smart'].std():.1f} min")
+    print(f"  Abandonment Current: {rep_df['abandon_rate_current'].mean()*100:.1f} ± {rep_df['abandon_rate_current'].std()*100:.1f}%")
+    print(f"  Abandonment Smart:   {rep_df['abandon_rate_smart'].mean()*100:.1f} ± {rep_df['abandon_rate_smart'].std()*100:.1f}%")
+    print(f"  CI Coverage Smart:   {rep_df['ci_coverage'].mean()*100:.1f} ± {rep_df['ci_coverage'].std()*100:.1f}%")
     
     # Calculate overall system improvements
-    st.write("\nOverall System Performance Improvements:")
+    print("\nOverall System Performance Improvements:")
     if rep_df['avg_wait_current'].mean() > 0:
         total_wait_improvement = (1 - rep_df['avg_wait_smart'].mean() / rep_df['avg_wait_current'].mean()) * 100
-        st.write(f"  Total wait time improvement: {total_wait_improvement:.1f}%")
+        print(f"  Total wait time improvement: {total_wait_improvement:.1f}%")
     
     if rep_df['avg_wait_triage_current'].mean() > 0:
         triage_wait_improvement = (1 - rep_df['avg_wait_triage_smart'].mean() / rep_df['avg_wait_triage_current'].mean()) * 100
-        st.write(f"  Triage wait time improvement: {triage_wait_improvement:.1f}%")
+        print(f"  Triage wait time improvement: {triage_wait_improvement:.1f}%")
     
     if rep_df['abandon_rate_current'].mean() > 0:
         abandon_improvement = (1 - rep_df['abandon_rate_smart'].mean() / rep_df['abandon_rate_current'].mean()) * 100
-        st.write(f"  Abandonment rate improvement: {abandon_improvement:.1f}%")
+        print(f"  Abandonment rate improvement: {abandon_improvement:.1f}%")
     
     throughput_improvement = ((rep_df['throughput_smart'].mean() - rep_df['throughput_current'].mean()) / rep_df['throughput_current'].mean()) * 100 if rep_df['throughput_current'].mean() > 0 else 0
-    st.write(f"  Throughput improvement: {throughput_improvement:.1f}%")
+    print(f"  Throughput improvement: {throughput_improvement:.1f}%")
     
     # Multiple replication visualization
-    st.write("\nCreating replication analysis visualization...")
+    print("\nCreating replication analysis visualization...")
     fig = plot_replication_results(rep_df) # for streamlit
     st.pyplot(fig)  # for streamlit
 
     
-    st.write("\n" + "="*60)
-    st.write("3-STAGE SIMULATION COMPLETE")
-    st.write("="*60)
-    st.write("\nKey Findings:")
-    st.write("1. Kiosk queue creates common bottleneck for both systems")
-    st.write("2. AI system shows major improvements at Registration stage")
-    st.write("3. Smart queue benefits from AI predictions at Triage stage")
-    st.write("4. Overall patient experience significantly improved with AI")
-    st.write("5. System demonstrates measurable ROI for AI implementation")
-    st.write("="*60)
+    print("\n" + "="*60)
+    print("3-STAGE SIMULATION COMPLETE")
+    print("="*60)
+    print("\nKey Findings:")
+    print("1. Kiosk queue creates common bottleneck for both systems")
+    print("2. AI system shows major improvements at Registration stage")
+    print("3. Smart queue benefits from AI predictions at Triage stage")
+    print("4. Overall patient experience significantly improved with AI")
+    print("5. System demonstrates measurable ROI for AI implementation")
+    print("="*60)
     
     return results, rep_df, complex_metrics
 
 if __name__ == '__main__':
-    results, replications, bootstrap_metrics = main()
+    # Capture print statements
+    output_buffer = StringIO()
+    
+    with contextlib.redirect_stdout(output_buffer):
+      results, replications, bootstrap_metrics = main()
 
+    # Display the captured output
+    captured_output = output_buffer.getvalue()
+    if captured_output:
+      st.text_area("Output:", captured_output, height=300)
+    
     # Clean exit button (visual only)
     st.success("✅ Visualization complete! You can now:")
     st.info("You May Close This Window + Press Ctrl+C In The Terminal To Stop The Server")
