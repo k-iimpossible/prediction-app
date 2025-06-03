@@ -294,7 +294,7 @@ def add_intercept_column(X, name='intercept'):
 def sigmoid(z):
     return 1.0/(1.0+exp(-z))
 
-
+@st.cache_resource
 def train_logistic_regression(
     X: np.ndarray,
     y: np.ndarray,
