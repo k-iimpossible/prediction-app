@@ -1493,6 +1493,17 @@ def plot_replication_results(rep_df):
 
     return fig  # for streamlit 
 
+@st.cache_data
+def load_csvs():
+    df_train = pd.read_csv('train.csv')
+    df_test  = pd.read_csv('test.csv')
+    return df_train, df_test
+
+@st.cache_data
+def load_weights():
+    w = np.load('pretrained_weights.npy')
+    return w
+
 # ============================================
 # PART 9: Main Execution
 # ============================================
@@ -1510,8 +1521,7 @@ def main():
 
         # ─── Load the CSVs ──────────────────────────────────────
         print("Loading training data...")
-        df_train = pd.read_csv('train.csv')
-        df_test  = pd.read_csv('test.csv')
+        df_train, df_test = load_csvs()
         print(f"Loaded {len(df_train)} training examples and {len(df_test)} test examples")
 
         # 1) Split features & labels
@@ -1544,7 +1554,7 @@ def main():
 
         # 4) Train using named hyperparameters
         try:
-            w = np.load('pretrained_weights.npy')
+            w = load_weights()
         except FileNotFoundError:
             w = train_logistic_regression(
                 X_train_final,
