@@ -294,6 +294,7 @@ def add_intercept_column(X, name='intercept'):
 def sigmoid(z):
     return 1.0/(1.0+exp(-z))
 
+
 def train_logistic_regression(
     X: np.ndarray,
     y: np.ndarray,
@@ -1542,13 +1543,16 @@ def main():
         X_test_final   = np.hstack([intercept_te,  X_te_scaled ])
 
         # 4) Train using named hyperparameters
-        w = train_logistic_regression(
-            X_train_final,
-            y_train,
-            lr    = LEARNING_RATE_DEFAULT,
-            n_iter= NUM_ITERATIONS_DEFAULT, 
-			reg_strength = REG_STRENGTH_DEFAULT
-        )
+        try:
+            w = np.load('pretrained_weights.npy')
+        except FileNotFoundError:
+            w = train_logistic_regression(
+                X_train_final,
+                y_train,
+                lr    = LEARNING_RATE_DEFAULT,
+                n_iter= NUM_ITERATIONS_DEFAULT, 
+                reg_strength = REG_STRENGTH_DEFAULT
+            )
                 
         # Evaluate model
         print("\nEvaluating model performance...")
